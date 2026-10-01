@@ -1,0 +1,2 @@
+/* Punto de entrada de estilos globales. Los tokens de diseño vivirán en theme.css (@theme). */
+@import 'tailwindcss';
