@@ -17,6 +17,7 @@ if (!parsedEnv.success) {
 export const envConfig: EnvConfig = {
   apiUrl: parsedEnv.data.VITE_API_URL,
   apiTimeoutMs: parsedEnv.data.VITE_API_TIMEOUT_MS,
+  mockApiEnabled: parsedEnv.data.VITE_API_MOCK_ENABLED && import.meta.env.DEV,
   isDev: import.meta.env.DEV,
   isProd: import.meta.env.PROD,
   mode: import.meta.env.MODE,

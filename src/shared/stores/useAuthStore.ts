@@ -9,10 +9,12 @@ export const useAuthStore = create<AuthState>()(
     persist(
       set => ({
         accessToken: null,
+        hasHydrated: false,
         setAccessToken: (accessToken) => {
           set({ accessToken: isJwtExpired(accessToken) ? null : accessToken })
         },
         clearSession: () => set({ accessToken: null }),
+        setHasHydrated: hasHydrated => set({ hasHydrated }),
       }),
       {
         name: APP_STORAGE_KEYS.AUTH,
@@ -21,6 +23,8 @@ export const useAuthStore = create<AuthState>()(
           if (state?.accessToken && isJwtExpired(state.accessToken)) {
             state.clearSession()
           }
+
+          state?.setHasHydrated(true)
         },
       },
     ),
@@ -30,3 +34,4 @@ export const useAuthStore = create<AuthState>()(
 
 export const selectAccessToken = (state: AuthState) => state.accessToken
 export const selectIsAuthenticated = (state: AuthState) => state.accessToken !== null
+export const selectHasHydrated = (state: AuthState) => state.hasHydrated

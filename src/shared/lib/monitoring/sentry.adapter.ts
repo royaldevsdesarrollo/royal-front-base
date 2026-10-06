@@ -37,7 +37,6 @@ export function createSentryAdapter(config: SentryConfig): MonitoringAdapter {
     enabled: config.enabled,
     environment: config.environment,
     release: config.release,
-    sendDefaultPii: false,
     beforeSend: (event) => {
       if (event.request?.headers) {
         for (const header of Object.keys(event.request.headers)) {

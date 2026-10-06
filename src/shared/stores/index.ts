@@ -1,2 +1,7 @@
 export { useAppStore } from './useAppStore'
-export { selectAccessToken, selectIsAuthenticated, useAuthStore } from './useAuthStore'
+export {
+  selectAccessToken,
+  selectHasHydrated,
+  selectIsAuthenticated,
+  useAuthStore,
+} from './useAuthStore'

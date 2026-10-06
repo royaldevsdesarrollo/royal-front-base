@@ -62,6 +62,15 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       reportCompressedSize: true,
       sourcemap: sentryUploadEnabled ? 'hidden' : false,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'data-vendor': ['@tanstack/react-query'],
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            'ui-vendor': ['cmdk', 'lucide-react', 'radix-ui'],
+          },
+        },
+      },
     },
   }
 })

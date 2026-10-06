@@ -1,2 +1,7 @@
-/* Punto de entrada de estilos globales. Los tokens de diseño vivirán en theme.css (@theme). */
+@import '@fontsource-variable/geist';
 @import 'tailwindcss';
+@import 'tw-animate-css';
+@import './theme.css';
+@import './base.css';
+
+@custom-variant dark (&:is(.dark *));

@@ -1,1 +1,3 @@
 // Componentes de retroalimentación: ErrorBoundary, ErrorFallback, LazyRoute, ...
+export { AppErrorBoundary } from './AppErrorBoundary'
+export { FullPageLoader } from './FullPageLoader'

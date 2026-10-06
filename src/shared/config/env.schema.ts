@@ -10,10 +10,16 @@ const booleanString = z
   .default('false')
   .transform(value => value === 'true')
 
+const mockBooleanString = z
+  .enum(['true', 'false'])
+  .default('true')
+  .transform(value => value === 'true')
+
 export const envSchema = z
   .object({
     VITE_API_URL: z.string().min(1).default('/api'),
     VITE_API_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
+    VITE_API_MOCK_ENABLED: mockBooleanString,
     VITE_SENTRY_ENABLED: booleanString,
     VITE_SENTRY_DSN: optionalString,
     VITE_SENTRY_ENVIRONMENT: z.string().min(1),

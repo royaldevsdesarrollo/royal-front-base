@@ -8,6 +8,7 @@ export interface SentryConfig {
 export interface EnvConfig {
   apiUrl: string
   apiTimeoutMs: number
+  mockApiEnabled: boolean
   isDev: boolean
   isProd: boolean
   mode: string

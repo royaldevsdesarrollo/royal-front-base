@@ -8,14 +8,14 @@ export const useAppStore = create<AppState>()(
     persist(
       set => ({
         theme: 'system',
-        sidebarOpen: false,
+        sidebarOpen: true,
         setTheme: theme => set({ theme }),
         setSidebarOpen: sidebarOpen => set({ sidebarOpen }),
         toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
       }),
       {
         name: APP_STORAGE_KEYS.APP,
-        partialize: state => ({ theme: state.theme }),
+        partialize: state => ({ sidebarOpen: state.sidebarOpen, theme: state.theme }),
       },
     ),
     { name: 'AppStore', enabled: envConfig.isDev },

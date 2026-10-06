@@ -93,6 +93,13 @@ export default tseslint.config(
     },
   },
   {
+    // La configuración del router exporta una instancia y declara lazy components locales.
+    files: ['src/routes/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
     files: codeFiles,
     rules: {
       'curly': ['error', 'all'],
