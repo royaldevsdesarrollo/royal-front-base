@@ -24,10 +24,11 @@ La plantilla ya dispone de:
 - TanStack Query configurado.
 - Stores de aplicación y autenticación con Zustand.
 - Integración opcional de Sentry con source maps condicionales.
-
-Todavía no existe el bootstrap de React (`main.tsx` y `App.tsx`). Por esa razón el servidor
-de Vite puede iniciar, pero la aplicación aún no tiene un árbol React funcional y el build
-completo queda pendiente.
+- Bootstrap React con providers, monitoreo, tema y router.
+- Autenticación completa con login, logout, `/auth/me` y rutas protegidas.
+- API mock de desarrollo con MSW.
+- Home, showcase de componentes y módulo de tareas de referencia.
+- Pruebas automatizadas con Vitest y React Testing Library.
 
 ## Convención de idiomas
 
@@ -52,6 +53,7 @@ completo queda pendiente.
 - nuqs.
 - shadcn con preset `radix-nova`.
 - Radix UI, Lucide y React Icons.
+- MSW para API mock en desarrollo y pruebas.
 
 ### Calidad
 
@@ -60,6 +62,7 @@ completo queda pendiente.
 - Plugins de React, Hooks, React Refresh y accesibilidad.
 - ESLint Stylistic para formato.
 - Sin Airbnb, SonarJS ni Prettier.
+- Vitest, React Testing Library y jest-dom.
 
 ### Monitoreo
 
@@ -70,12 +73,14 @@ completo queda pendiente.
 
 ```bash
 pnpm install       # instala las dependencias
-pnpm dev           # servidor de Vite en localhost:4200 (bootstrap pendiente)
-pnpm build         # TypeScript + build de Vite (bootstrap pendiente)
+pnpm dev           # servidor de Vite en localhost:4200
+pnpm build         # TypeScript + build de Vite
 pnpm preview       # sirve dist/ en localhost:4300
 pnpm typecheck     # validación de TypeScript
 pnpm lint          # validación de ESLint
 pnpm lint:fix      # autofix de ESLint
+pnpm test          # pruebas automatizadas
+pnpm test:watch    # pruebas en modo interactivo
 pnpm ui:add        # agrega componentes shadcn y actualiza el barrel
 pnpm ui:barrel     # regenera el barrel de componentes UI
 ```
@@ -91,6 +96,9 @@ pnpm typecheck
 
 ```text
 src/
+├── App.tsx                          # Providers globales
+├── main.tsx                         # Bootstrap de monitoreo, mocks y React
+├── mocks/                           # Handlers de MSW
 ├── modules/                         # Módulos de negocio
 ├── pages/                           # Páginas que componen módulos y componentes
 ├── routes/                          # Definiciones de React Router
@@ -103,7 +111,7 @@ src/
 │   │   ├── common/
 │   │   ├── datatable/
 │   │   ├── feedback/
-│   │   ├── layouts/
+│   │   ├── layouts/                  # AppSidebar, MainLayout y navegación
 │   │   ├── routes/
 │   │   └── ui/                      # Componentes generados por shadcn
 │   ├── config/                      # Entorno y constantes globales
@@ -144,8 +152,8 @@ modules/<module>/
 └── index.ts
 ```
 
-Solo deben crearse las carpetas que el módulo realmente necesite. La referencia futura será
-un módulo neutral; autenticación no será el ejemplo canónico para todos los dominios.
+Solo deben crearse las carpetas que el módulo realmente necesite. `modules/tasks` es la
+referencia neutral; autenticación no es el ejemplo canónico para todos los dominios.
 
 ## TypeScript
 
@@ -218,8 +226,22 @@ pnpm ui:barrel
 - Los archivos generados permanecen en kebab-case para no romper imports internos.
 - `ui/index.ts` es generado y no debe editarse manualmente.
 - El barrel utiliza `export *` para incluir componentes, variantes y tipos.
-- Los componentes instalados actualmente son `badge` y `button`.
+- El kit esencial incluye formularios, navegación, overlays, feedback y visualización de
+  datos. `/showcase` mantiene ejemplos funcionales de sus principales estados.
+- `sidebar.tsx` conserva la composición oficial de shadcn y `AppSidebar` aporta la navegación
+  concreta del scaffold.
 - Los componentes propios fuera de `ui` usarán `PascalCase.tsx`.
+
+### Sidebar y layout
+
+- El sidebar utiliza `variant="sidebar"` y `collapsible="icon"`.
+- En escritorio puede alternarse con el trigger, el rail, `Cmd+B` o `Ctrl+B`.
+- En móvil se presenta mediante un Sheet y se cierra al navegar.
+- La preferencia expandida o colapsada se persiste en `useAppStore`.
+- `navigation.config.ts` centraliza rutas, etiquetas, iconos y breadcrumbs.
+- `MainLayout` ocupa todo el viewport y el contenido usa `SidebarInset`.
+- `PageContainer` no aplica `max-width` ni centrado global; cada pantalla limita únicamente
+  los bloques que necesitan una longitud de lectura menor.
 
 ## Variables de entorno
 
@@ -227,6 +249,7 @@ pnpm ui:barrel
 VITE_API_URL=/api
 VITE_API_TIMEOUT_MS=15000
 VITE_API_PROXY_TARGET=http://localhost:3000
+VITE_API_MOCK_ENABLED=true
 
 VITE_SENTRY_ENABLED=false
 VITE_SENTRY_DSN=
@@ -243,6 +266,7 @@ SENTRY_PROJECT=
 - Las variables runtime son validadas con Zod en `env.schema.ts`.
 - `VITE_API_URL` usa `/api` como valor predeterminado.
 - El timeout HTTP predeterminado es de 15 segundos.
+- Los mocks están habilitados por defecto únicamente en desarrollo y nunca en producción.
 - El DSN es obligatorio solo si Sentry está habilitado.
 - `SENTRY_AUTH_TOKEN` no lleva prefijo `VITE_` porque es un secreto exclusivo del build.
 - Vite usa `loadEnv` para que el proxy lea correctamente el archivo `.env`.
@@ -274,7 +298,7 @@ No existe refresh token. Si el JWT está vencido o una petición autenticada res
 2. Se limpia el cache de TanStack Query.
 3. Se elimina el usuario de monitoreo.
 4. Se muestra un toast deduplicado de sesión expirada.
-5. La futura ruta protegida reaccionará al store y redirigirá al login.
+5. La ruta protegida reacciona al store y redirige al login.
 
 El cliente no importa el router. También compara el token de la petición fallida con la
 sesión actual para impedir que una respuesta antigua cierre una sesión nueva.
@@ -365,19 +389,21 @@ Estado:
 - `theme`: `light`, `dark` o `system`.
 - `sidebarOpen`.
 
-Solo el tema se persiste. El estado del sidebar es temporal. Zustand DevTools se activa
-únicamente en desarrollo.
+El tema y la preferencia del sidebar se persisten. El estado móvil del Sidebar permanece
+temporal. Zustand DevTools se activa únicamente en desarrollo.
 
 ### `useAuthStore`
 
 Estado:
 
 - `accessToken`.
+- `hasHydrated`.
 - `setAccessToken`.
+- `setHasHydrated`.
 - `clearSession`.
 
 Solo el JWT se persiste. `isAuthenticated` es un selector derivado y no se almacena. El
-usuario se consultará posteriormente con TanStack Query mediante `/auth/me`, evitando
+usuario se consulta con TanStack Query mediante `/auth/me`, evitando
 duplicar estado de servidor en Zustand.
 
 Al hidratar el store se elimina cualquier JWT mal formado, sin `exp` o vencido.
@@ -399,7 +425,7 @@ Sin configuración, todas las operaciones son no-op. Si `VITE_SENTRY_ENABLED=tru
 
 ### Privacidad
 
-- `sendDefaultPii` está deshabilitado.
+- No se habilita el envío de PII.
 - Se eliminan headers `Authorization`, `Cookie` y `Set-Cookie`.
 - Se eliminan parámetros `token`, `access_token` y `authorization` de URLs.
 - El objeto original de Axios no se entrega a Sentry.
@@ -411,7 +437,7 @@ Se reportan:
 
 - Errores desconocidos.
 - Errores HTTP `5xx`.
-- En el futuro, errores de render capturados por `ErrorBoundary`.
+- Errores de render capturados por `ErrorBoundary`.
 
 No se reportan:
 
@@ -435,10 +461,10 @@ esas credenciales no se generan ni se suben source maps.
 
 Performance Tracing y Session Replay no están instalados ni habilitados.
 
-### Integración pendiente en el bootstrap
+### Integración en el bootstrap
 
-Cuando exista `main.tsx`, deberá ejecutar `setupMonitoring()` antes de montar React. El
-`ErrorBoundary` deberá llamar `reportError` desde su callback `onError`.
+`main.tsx` ejecuta `setupMonitoring()` antes de montar React y `AppErrorBoundary` llama a
+`reportError` desde su callback `onError`.
 
 ## Hooks sugeridos
 
@@ -449,7 +475,7 @@ No se crearán hooks sin un consumidor real.
 | Hook | Propósito | Momento recomendado |
 | --- | --- | --- |
 | `useDebouncedValue` | Retardar búsquedas y filtros | Primer listado con búsqueda |
-| `useMediaQuery` | Consultar breakpoints desde React | Layout responsive |
+| `useIsMobile` | Detectar el breakpoint móvil | Sidebar responsive (implementado) |
 | `useDisclosure` | Estado de dialog, drawer y popover | Primer overlay controlado |
 | `useDocumentTitle` | Cambiar título por página | Bootstrap y rutas |
 | `usePaginationParams` | Página, límite y filtros con nuqs | Primer listado paginado |
@@ -458,13 +484,15 @@ No se crearán hooks sin un consumidor real.
 
 ### Hooks de módulo
 
-Estos hooks deben vivir en su dominio, no en `shared`:
+Estos hooks viven en su dominio, no en `shared`:
 
 - `useLogin`
 - `useLogout`
 - `useCurrentUser`
-- `useUsers`
-- `useCreateUser`
+- `useTasks`
+- `useCreateTask`
+- `useToggleTask`
+- `useDeleteTask`
 
 No se recomienda crear wrappers genéricos como `useApi` o `useFetch`, porque ocultan query
 keys, contratos y políticas específicas de cada dominio.
@@ -505,7 +533,7 @@ fuera de `shared/lib/api`.
 - Configuración `radix-nova`.
 - Workaround de alias para tsconfig con referencias.
 - Scripts para agregar componentes y regenerar el barrel.
-- Instalación de `badge` y `button` como prueba funcional.
+- Instalación del kit esencial y del Sidebar oficial de shadcn.
 
 ### ESLint
 
@@ -524,72 +552,56 @@ fuera de `shared/lib/api`.
 - JWT sin refresh token.
 - Monitoreo opcional con Sentry.
 
+### Bootstrap, tema y navegación
+
+- Bootstrap asíncrono con MSW y monitoreo antes de montar React.
+- Providers globales de Query, tema, tooltips, router, toasts y ErrorBoundary.
+- Tokens semánticos, fuente Geist y temas claro, oscuro y sistema.
+- Rutas lazy públicas y protegidas con `AuthenticatedLayout`.
+- `AppSidebar` colapsable, `MainLayout` a ancho completo, `PageContainer` y página 404.
+- Configuración única para navegación activa, breadcrumbs e iconos.
+- Persistencia del estado de escritorio y Sheet móvil.
+- Home protegida con una descripción breve del scaffold.
+
+### Auth y mocks
+
+- Login, logout y consulta `/auth/me` con contratos tipados.
+- JWT persistido, hidratación controlada y validación de sesión.
+- Usuario de monitoreo y cache limpiados al cerrar o expirar la sesión.
+- MSW habilitado únicamente en desarrollo con credenciales demo documentadas en la UI.
+
+### Showcase y módulo de ejemplo
+
+- Kit esencial de shadcn instalado y expuesto en `/showcase`.
+- Ejemplos de formularios, acciones, overlays, feedback, navegación y datos.
+- Módulo neutral de tareas con adapters, schemas, services, hooks y componentes.
+- Operaciones mock para listar, crear, completar y eliminar tareas.
+
+### Testing
+
+- Vitest, jsdom, React Testing Library, jest-dom y MSW configurados.
+- Pruebas del login mock, adapter de tareas, navegación, persistencia y logout del layout.
+
 ## Pendiente
 
 Esta sección contiene únicamente trabajo pendiente. Cuando una tarea se complete debe
 eliminarse de aquí y registrarse de forma resumida en “Fases completadas”.
 
-### Bootstrap funcional
-
-- [ ] Crear `main.tsx` y `App.tsx`.
-- [ ] Montar `QueryClientProvider`, router, `Toaster` y `ErrorBoundary`.
-- [ ] Ejecutar `setupMonitoring()` antes de montar React.
-- [ ] Crear una `HomePage` mínima.
-- [ ] Validar `pnpm dev`, `pnpm build` y `pnpm preview`.
-
-### Theme y estilos
-
-- [ ] Crear tokens semánticos en `theme.css`.
-- [ ] Configurar las fuentes del proyecto.
-- [ ] Implementar temas `light`, `dark` y `system`.
-- [ ] Sincronizar el tema con `useAppStore` y el documento.
-- [ ] Validar visualmente `badge` y `button`.
-
-### Routing y layouts
-
-- [ ] Definir rutas públicas y protegidas.
-- [ ] Crear `MainLayout`, Header, Sidebar y PageContainer.
-- [ ] Implementar `ProtectedRoute` sin acoplar Axios al router.
-- [ ] Crear página 404.
-- [ ] Configurar lazy loading de páginas protegidas.
-
-### Autenticación
-
-- [ ] Definir el contrato real del backend.
-- [ ] Implementar login y logout.
-- [ ] Implementar la consulta `/auth/me` con TanStack Query.
-- [ ] Conectar el JWT recibido con `useAuthStore`.
-- [ ] Asociar y limpiar el usuario de Sentry.
-- [ ] Limpiar el cache al cerrar sesión o cambiar de usuario.
-
-### Módulo de ejemplo
-
-- [ ] Elegir un dominio neutral que no sea autenticación.
-- [ ] Implementar adapters, services, hooks, schemas, types y componentes necesarios.
-- [ ] Demostrar el flujo `components → hooks → services → apiClient`.
-- [ ] Documentar el procedimiento para crear módulos nuevos.
-
 ### Componentes compartidos
 
-- [ ] Crear `ErrorBoundary` y fallback de error.
-- [ ] Crear componentes comunes de carga y estados vacíos cuando sean necesarios.
-- [ ] Configurar componentes de formularios al implementar el primer formulario.
 - [ ] Crear DataTable, paginación y selección al implementar el primer listado.
 - [ ] Instalar nuevos componentes shadcn únicamente bajo demanda.
 
 ### Hooks y utilidades
 
 - [ ] Crear `useDebouncedValue` cuando exista una búsqueda.
-- [ ] Crear `useMediaQuery` y `useDisclosure` con los layouts.
+- [ ] Crear `useDisclosure` cuando exista un consumidor compartido.
 - [ ] Crear `useDocumentTitle` con las rutas.
 - [ ] Crear `usePaginationParams`, `useDataTable` y `useRowSelection` con el primer listado.
 - [ ] Añadir utilidades de fecha, moneda, descarga y paginación solo con consumidores reales.
 
 ### Testing
 
-- [ ] Configurar Vitest.
-- [ ] Configurar React Testing Library.
-- [ ] Configurar MSW para simular la API.
 - [ ] Definir el criterio de cobertura.
 - [ ] Probar errores normalizados, interceptores, stores y sesión expirada.
 

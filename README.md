@@ -9,9 +9,8 @@ y mantenida de forma independiente.
 Consulta [`docs/PROJECT.md`](./docs/PROJECT.md) para conocer la arquitectura, decisiones
 técnicas, infraestructura, seguridad y estado detallado del proyecto.
 
-> **Estado del proyecto:** Fase 1 completada (scaffolding: dependencias, configuración de
-> build y arquitectura de carpetas), configuración funcional de shadcn, ESLint e
-> infraestructura compartida. Ver el [roadmap](#roadmap-por-fases) para lo que sigue.
+> **Estado del proyecto:** scaffold funcional con Auth, API mock, rutas protegidas, theme,
+> showcase de componentes, módulo de ejemplo y pruebas automatizadas.
 
 ## Stack
 
@@ -22,6 +21,7 @@ técnicas, infraestructura, seguridad y estado detallado del proyecto.
 - **Zustand** — estado de cliente
 - **React Hook Form** + **Zod** (`zodResolver`)
 - **Axios** — cliente HTTP con interceptores
+- **MSW** — API mock de desarrollo y pruebas
 - **Sonner** (toasts) · **nuqs** (estado en URL) · **react-error-boundary**
 - Helpers de clases: `cn()` (clsx + tailwind-merge) y `cva` (variantes)
 
@@ -39,18 +39,20 @@ pnpm install
 ## Scripts
 
 ```bash
-pnpm dev          # servidor de desarrollo (http://localhost:4200)  [fase 2]
-pnpm build        # tsc -b + build de producción -> dist/            [fase 2]
-pnpm preview      # sirve el build de producción                     [fase 2]
-pnpm typecheck    # tsc --noEmit
+pnpm dev          # servidor de desarrollo (http://localhost:4200)
+pnpm build        # tsc -b + build de producción -> dist/
+pnpm preview      # sirve el build de producción
+pnpm typecheck    # verifica los proyectos TypeScript referenciados
 pnpm lint         # verifica código, React, accesibilidad y estilo
 pnpm lint:fix     # corrige automáticamente estilo e infracciones reparables
+pnpm test         # ejecuta las pruebas una vez
+pnpm test:watch   # ejecuta las pruebas en modo interactivo
 pnpm ui:add       # agrega componentes UI con shadcn + regenera el barrel
 pnpm ui:barrel    # regenera el barrel de shared/components/ui
 ```
 
-> Los scripts `dev`, `build` y `preview` quedarán operativos en la fase 2, cuando exista
-> el bootstrap de la aplicación (`main.tsx`).
+Con los valores predeterminados el servidor de desarrollo usa la API mock. Credenciales:
+`demo@royalstack.dev` / `demo1234`.
 
 ## Variables de entorno
 
@@ -61,6 +63,7 @@ Copia `.env.example` a `.env`:
 | `VITE_API_URL`               | URL base de la API. Por defecto `/api`.                            |
 | `VITE_API_TIMEOUT_MS`        | Timeout HTTP en milisegundos. Por defecto `15000`.                 |
 | `VITE_API_PROXY_TARGET`      | Destino del proxy `/api` en desarrollo.                            |
+| `VITE_API_MOCK_ENABLED`      | Activa MSW únicamente en desarrollo. Por defecto `true`.           |
 | `VITE_SENTRY_ENABLED`        | Activa Sentry en runtime. Por defecto `false`.                     |
 | `VITE_SENTRY_DSN`            | DSN público; obligatorio solo cuando Sentry está habilitado.       |
 | `VITE_SENTRY_ENVIRONMENT`    | Entorno reportado a Sentry.                                       |
@@ -85,9 +88,9 @@ src/
     ├── components/
     │   ├── ui/            # Kit de componentes base (Button, Input, Dialog, ...)
     │   ├── datatable/     # Tablas/listados de datos y paginación
-    │   ├── layouts/       # MainLayout, Sidebar, Header, PageContainer, ...
-    │   ├── feedback/      # ErrorBoundary, ErrorFallback, LazyRoute, ...
-    │   ├── routes/        # ProtectedRoute, ...
+    │   ├── layouts/       # AppSidebar, MainLayout y PageContainer
+    │   ├── feedback/      # AppErrorBoundary y FullPageLoader
+    │   ├── routes/        # Primitivas de rutas compartidas futuras
     │   └── common/        # Compartidos que no encajan en otra categoría
     ├── config/            # env, constantes (ROUTES, API_ENDPOINTS, QUERY_KEYS)
     ├── hooks/             # Hooks reutilizables (useDebounce, useDataTable, ...)
@@ -124,8 +127,8 @@ src/
 
 ### Zustand
 
-- `useAppStore`: tema (`light`, `dark`, `system`) y estado del sidebar; persiste solo el tema.
-- `useAuthStore`: persiste únicamente el JWT. El usuario autenticado se consultará con
+- `useAppStore`: tema (`light`, `dark`, `system`) y estado del sidebar; persiste ambos.
+- `useAuthStore`: persiste únicamente el JWT. El usuario autenticado se consulta con
   TanStack Query (`/auth/me`) para no duplicar estado de servidor.
 - `isAuthenticated` es un selector derivado, no un valor persistido.
 
@@ -176,8 +179,18 @@ Notas:
 - `ui/index.ts` es un **archivo generado** (`pnpm ui:barrel`); no se edita a mano.
 - Los componentes importan `cn` desde `@/shared/utils` y las primitivas del paquete
   `radix-ui`, ambos ya instalados.
-- Los tokens visuales (`bg-primary`, `text-muted-foreground`, ...) se definen en la
-  fase de theme (`theme.css`); los componentes compilan desde ya.
+- Los tokens visuales (`bg-primary`, `text-muted-foreground`, ...) se definen en
+  `theme.css` y ofrecen modos claro, oscuro y sistema.
+- El Sidebar oficial de shadcn está integrado en `MainLayout`, colapsa a iconos en escritorio
+  y utiliza un Sheet en móvil. Su preferencia se recuerda entre recargas.
+
+## Layout principal
+
+- Navegación lateral izquierda con Inicio, Showcase y Ejemplo.
+- Colapso mediante trigger, rail, `Cmd+B` o `Ctrl+B`.
+- Header compacto con breadcrumb derivado de la navegación y selector de tema.
+- Usuario y logout en el footer del Sidebar.
+- Contenido a ancho completo, sin `max-w-7xl` ni márgenes laterales de centrado.
 
 ## Calidad de código
 
@@ -218,14 +231,14 @@ El comando `pnpm ui:add` ejecuta ESLint autofix sobre los componentes generados 
 | Fase | Contenido                                                        | Estado      |
 | ---- | ---------------------------------------------------------------- | ----------- |
 | 1    | Scaffolding: dependencias, configuración de build y arquitectura | ✅ Completada |
-| 2    | Bootstrap funcional (`main.tsx`, `App.tsx`, rutas, HomePage)     | Pendiente   |
+| 2    | Bootstrap funcional (`main.tsx`, `App.tsx`, rutas, HomePage)     | Completada  |
 | 3    | Infraestructura shared (API, Query, stores, errores, Sentry)     | Completada  |
-| 4    | Theme y estilos (`theme.css` con tokens `@theme`, fuentes)       | Pendiente   |
+| 4    | Theme y estilos (`theme.css` con tokens `@theme`, fuentes)       | Completada  |
 | 5    | Calidad de código: ESLint 9 + Stylistic, sin Prettier           | Completada  |
 | 6    | Configuración de shadcn (CLI + aliases + barrel automático)      | ✅ Completada |
-| 7    | Layouts + rutas protegidas                                       | Pendiente   |
-| 8    | Módulo de ejemplo como referencia para nuevos módulos            | Pendiente   |
+| 7    | Layouts + rutas protegidas                                       | Completada  |
+| 8    | Auth mock, showcase y módulo de ejemplo                           | Completada  |
 | 9    | Git + hooks (lefthook/commitlint) + documentación para agentes   | Pendiente   |
 
 > El kit UI se construye **bajo demanda**: agrega cada componente con `pnpm ui:add`
-> cuando lo necesites. Ya instalados como prueba funcional: `badge` y `button`.
+> cuando lo necesites. El conjunto esencial actual se puede explorar en `/showcase`.
