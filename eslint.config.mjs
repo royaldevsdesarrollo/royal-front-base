@@ -14,7 +14,7 @@ const codeFiles = [...typescriptFiles, ...scriptFiles]
 
 export default tseslint.config(
   {
-    ignores: ['dist', 'build', 'coverage', 'node_modules', 'public', 'dev-dist'],
+    ignores: ['dist', 'build', 'coverage', 'node_modules', 'public', 'dev-dist', '.agents'],
   },
   {
     files: scriptFiles,
