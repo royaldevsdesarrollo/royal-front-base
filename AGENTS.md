@@ -10,6 +10,7 @@ Antes de modificar arquitectura o módulos, consulta:
 
 - [`docs/PROJECT.md`](./docs/PROJECT.md): estado, stack, infraestructura y pendientes.
 - [`docs/MODULES.md`](./docs/MODULES.md): anatomía, flujo y checklist de módulos.
+- [`docs/SKILLS.md`](./docs/SKILLS.md): catálogo de skills instaladas.
 
 Si el código contradice la documentación, verifica el comportamiento actual y actualiza ambos
 como parte del mismo cambio. No documentes como funcional algo que no esté implementado.
@@ -45,6 +46,27 @@ pnpm test
 
 Ejecuta también `pnpm build` cuando cambien rutas, exports, dependencias, configuración,
 providers o bootstrap.
+
+## Uso de skills
+
+Las skills instaladas en `.agents/skills/` aportan conocimiento especializado, pero no
+reemplazan las convenciones de este archivo ni de `docs/PROJECT.md` y `docs/MODULES.md`. Si una
+skill contradice el proyecto, prevalece la convención local.
+
+- `frontend-architecture`: al escribir, revisar o refactorizar arquitectura frontend.
+- `vercel-react-best-practices`: al trabajar con React, rendimiento, fetching o bundles;
+  aplica solo recomendaciones compatibles con Vite y el stack existente.
+- `vercel-composition-patterns`: al diseñar APIs reutilizables o corregir proliferación de
+  props booleanas.
+- `shadcn`: al agregar, modificar, depurar o componer componentes shadcn.
+- `web-design-guidelines`: después de implementar una interfaz relevante, para revisar UX,
+  responsive design y accesibilidad.
+- `webapp-testing`: para validar en navegador flujos funcionales que atraviesan varios
+  componentes o rutas; complementa, no sustituye, Vitest y Testing Library.
+- `systematic-debugging`: ante bugs, tests fallidos o comportamiento inesperado; reproduce,
+  reúne evidencia, aísla la causa raíz y solo entonces corrige.
+- `verification-before-completion`: antes de afirmar que un cambio está terminado o funciona;
+  exige evidencia reciente de los comandos y flujos relevantes.
 
 ## Arquitectura
 
@@ -93,17 +115,30 @@ Reglas:
 - Componentes y páginas en `PascalCase.tsx`.
 - Hooks con prefijo `use`.
 - Services, schemas, adapters y tipos con sus sufijos documentados.
+- Deriva valores durante el render en lugar de sincronizarlos con estado y efectos innecesarios.
+- Mantén la lógica causada por una interacción en su event handler, no en un efecto indirecto.
+- Prefiere composición y variantes explícitas frente a componentes con muchas props booleanas.
 - Usa `cn()` para combinar clases.
 - Usa tokens semánticos; no hardcodees colores de marca en componentes.
 - Conserva estados de carga, error, vacío y éxito cuando sean relevantes.
 
 ## UI y shadcn
 
-- Agrega componentes mediante `pnpm ui:add`; no ejecutes una versión remota sin necesidad.
+- La skill `shadcn` es conocimiento de apoyo. No tiene autoridad para cambiar la ubicación de
+  componentes, el preset, `components.json`, el barrel generado ni los comandos definidos por
+  `royal-stack-web`. Ante cualquier contradicción, prevalecen las convenciones locales.
+- Agrega componentes solo con un consumidor real mediante `pnpm ui:add <component>`; no
+  sustituyas este flujo por una ejecución remota sin una razón técnica concreta.
+- Mantén los componentes generados en `src/shared/components/ui/`.
 - `src/shared/components/ui/index.ts` es generado: no lo edites manualmente.
+- Regenera el barrel con `pnpm ui:barrel` cuando una operación excepcional no pase por
+  `pnpm ui:add`.
 - Conserva nombres kebab-case de archivos generados por shadcn.
 - Revisa imports de `cn`, accesibilidad y lint después de generar componentes.
 - Los componentes propios fuera de `ui` usan `PascalCase.tsx`.
+- Para comportamiento de negocio, compón primitives desde el módulo en lugar de introducirlo
+  en un componente shadcn global.
+- Revisa consumidores antes de modificar una API existente de shadcn.
 - Los tokens viven en `src/shared/assets/styles/theme.css`.
 
 ## Datos, errores y sesión
