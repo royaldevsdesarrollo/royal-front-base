@@ -29,6 +29,7 @@ La plantilla ya dispone de:
 - API mock de desarrollo con MSW.
 - Home, showcase de componentes y módulo de tareas de referencia.
 - Pruebas automatizadas con Vitest y React Testing Library.
+- Guía canónica de módulos e instrucciones para agentes de IA.
 
 ## Convención de idiomas
 
@@ -90,7 +91,11 @@ Antes de considerar terminado un cambio deben pasar:
 ```bash
 pnpm lint
 pnpm typecheck
+pnpm test
 ```
+
+`pnpm build` también es obligatorio cuando cambian rutas, exports, dependencias,
+configuración, providers o bootstrap.
 
 ## Arquitectura
 
@@ -137,7 +142,7 @@ components → hooks → services → apiClient
 - Los adapters de cada módulo transformarán DTOs en modelos del dominio.
 - `shared` no debe depender de `modules`.
 
-### Anatomía prevista de un módulo
+### Anatomía de un módulo
 
 ```text
 modules/<module>/
@@ -154,6 +159,9 @@ modules/<module>/
 
 Solo deben crearse las carpetas que el módulo realmente necesite. `modules/tasks` es la
 referencia neutral; autenticación no es el ejemplo canónico para todos los dominios.
+
+La guía completa de responsabilidades, flujo y creación de módulos está en
+[`docs/MODULES.md`](./MODULES.md).
 
 ## TypeScript
 
@@ -582,6 +590,12 @@ fuera de `shared/lib/api`.
 - Vitest, jsdom, React Testing Library, jest-dom y MSW configurados.
 - Pruebas del login mock, adapter de tareas, navegación, persistencia y logout del layout.
 
+### Documentación para agentes
+
+- `AGENTS.md` con reglas operativas, comandos y límites arquitectónicos.
+- `docs/MODULES.md` como referencia canónica para crear y revisar módulos.
+- Enlaces desde README y documentación del proyecto.
+
 ## Pendiente
 
 Esta sección contiene únicamente trabajo pendiente. Cuando una tarea se complete debe
@@ -612,12 +626,10 @@ eliminarse de aquí y registrarse de forma resumida en “Fases completadas”.
 - [ ] Configurar Commitlint.
 - [ ] Definir checks de pre-commit que no bloqueen innecesariamente el flujo.
 
-### Documentación para agentes
+### Mantenimiento documental
 
-- [ ] Crear `AGENTS.md` en español.
-- [ ] Agregar configuración e instrucciones para OpenCode.
-- [ ] Documentar convenciones completas de contribución.
-- [ ] Mantener actualizado este documento con cada cambio.
+- [ ] Mantener `README.md`, `AGENTS.md`, `docs/PROJECT.md` y `docs/MODULES.md` sincronizados
+  cuando cambien convenciones o arquitectura.
 
 ## Criterio de actualización
 

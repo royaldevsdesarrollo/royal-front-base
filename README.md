@@ -6,8 +6,9 @@ y mantenida de forma independiente.
 
 ## Documentación
 
-Consulta [`docs/PROJECT.md`](./docs/PROJECT.md) para conocer la arquitectura, decisiones
-técnicas, infraestructura, seguridad y estado detallado del proyecto.
+- [`docs/PROJECT.md`](./docs/PROJECT.md): arquitectura, infraestructura, decisiones y estado.
+- [`docs/MODULES.md`](./docs/MODULES.md): anatomía, flujo y checklist para módulos.
+- [`AGENTS.md`](./AGENTS.md): instrucciones operativas para agentes de IA.
 
 > **Estado del proyecto:** scaffold funcional con Auth, API mock, rutas protegidas, theme,
 > showcase de componentes, módulo de ejemplo y pruebas automatizadas.
@@ -210,7 +211,11 @@ Antes de considerar terminado un cambio:
 ```bash
 pnpm lint
 pnpm typecheck
+pnpm test
 ```
+
+Ejecuta también `pnpm build` cuando el cambio afecte rutas, exports, dependencias,
+configuración o bootstrap.
 
 El comando `pnpm ui:add` ejecuta ESLint autofix sobre los componentes generados por shadcn.
 
@@ -238,7 +243,8 @@ El comando `pnpm ui:add` ejecuta ESLint autofix sobre los componentes generados 
 | 6    | Configuración de shadcn (CLI + aliases + barrel automático)      | ✅ Completada |
 | 7    | Layouts + rutas protegidas                                       | Completada  |
 | 8    | Auth mock, showcase y módulo de ejemplo                           | Completada  |
-| 9    | Git + hooks (lefthook/commitlint) + documentación para agentes   | Pendiente   |
+| 9    | Git + hooks (lefthook/commitlint)                                | Pendiente   |
+| 10   | Guía de módulos e instrucciones para agentes                     | Completada  |
 
 > El kit UI se construye **bajo demanda**: agrega cada componente con `pnpm ui:add`
 > cuando lo necesites. El conjunto esencial actual se puede explorar en `/showcase`.
